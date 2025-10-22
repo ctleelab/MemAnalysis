@@ -32,14 +32,30 @@ dynamic = ["version"]
 
 [tool.hatch]
 version.source = "vcs"
-build.hooks.vcs.version-file = "MemAnalysis/_version.py"
 version.raw_options.version_scheme = "guess-next-dev"
 version.raw_options.local_scheme = "node-and-date"
+build.hooks.vcs.version-file = "MemAnalysis/_version.py"
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
 MemAnalysis = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+python = ">=3.14.0,<3.15"
+mdanalysis = ">=2.10.0,<3"
+numpy = ">=2.3.3,<3"
+
+[tool.pixi.feature.test.dependencies]
+pytest = "*"
+
+[tool.pixi.feature.test.tasks]
+tests = "pytest"
+tests-verbose = "pytest -v"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
