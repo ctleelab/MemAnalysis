@@ -48,9 +48,11 @@ MemAnalysis = { path = ".", editable = true }
 python = ">=3.14.0,<3.15"
 mdanalysis = ">=2.10.0,<3"
 numpy = ">=2.3.3,<3"
+scipy = ">=1.16.2,<2"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
+mdanalysisdata = "*"
 
 [tool.pixi.feature.test.tasks]
 tests = "pytest"

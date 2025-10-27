@@ -330,6 +330,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.10.7-py314h1194b4b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mda-xdrlib-0.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/mdanalysis-2.10.0-py314ha0b5721_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/mdanalysisdata-0.9.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mmtf-python-1.1.3-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/mrcfile-1.5.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/msgpack-python-1.1.2-py314h9891dd4_0.conda
@@ -452,6 +453,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/matplotlib-base-3.10.7-py314hd63e3f0_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mda-xdrlib-0.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/mdanalysis-2.10.0-py314ha3d490a_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/mdanalysisdata-0.9.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/mmtf-python-1.1.3-pyhd8ed1ab_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/mrcfile-1.5.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/msgpack-python-1.1.2-py314h784bc60_0.conda
@@ -2314,10 +2316,23 @@ packages:
   - pkg:pypi/mdanalysis?source=hash-mapping
   size: 4910888
   timestamp: 1760813145900
+- conda: https://conda.anaconda.org/conda-forge/noarch/mdanalysisdata-0.9.0-pyhd8ed1ab_1.conda
+  sha256: 47f49e980db675d039437dfecf838145e905328717910017199b1dc9848e76d8
+  md5: c9455a4459b24389ea13ffd654ad9fcb
+  depends:
+  - python >=3.9
+  - setuptools
+  - tqdm
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/mdanalysisdata?source=hash-mapping
+  size: 27787
+  timestamp: 1737047806323
 - pypi: ./
   name: memanalysis
-  version: 0.1.dev2+g95277702b.d20251022
-  sha256: 3d60a431f3e4feb2e37adda828e894781bc146e219bc21366d2fc27711f63db1
+  version: 0.1.dev4+gccf79cf59.d20251027
+  sha256: 3d34669e26e395fc4e230c88a0caf2f7b9837cdf8de851fd3e8fb9296633ea57
   requires_python: '>=3.9'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/mmtf-python-1.1.3-pyhd8ed1ab_0.tar.bz2
