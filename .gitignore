@@ -162,9 +162,8 @@ cython_debug/
 #.idea/
 
 # pixi environments
-.pixi
-*.egg-info
-
-MemAnalysis/_version.py# pixi environments
 .pixi/*
+*.egg-info
 !.pixi/config.toml
+
+MemAnalysis/_version.py
