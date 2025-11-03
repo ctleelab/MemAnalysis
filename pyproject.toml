@@ -55,7 +55,7 @@ pytest = "*"
 mdanalysisdata = "*"
 
 [tool.pixi.feature.test.tasks]
-tests = "pytest"
+tests = "pytest -s"
 tests-verbose = "pytest -v"
 
 [tool.pixi.environments]
