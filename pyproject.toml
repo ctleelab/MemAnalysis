@@ -54,8 +54,10 @@ scipy = ">=1.16.2,<2"
 pytest = "*"
 mdanalysisdata = "*"
 
+# "pixi run tests" will run all files named test_*.py within tests/ directory
 [tool.pixi.feature.test.tasks]
-tests = "pytest -s"
+tests = "pytest"
+tests-print = "pytest -s"
 tests-verbose = "pytest -v"
 
 [tool.pixi.environments]

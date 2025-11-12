@@ -2337,8 +2337,8 @@ packages:
   timestamp: 1737047806323
 - pypi: ./
   name: memanalysis
-  version: 0.1.dev9+g53a30d585.d20251103
-  sha256: e36724f82d4096e95a32a088c6d3ab217ea44912ebe306dc0aaccd96a297e64f
+  version: 0.1.dev11+g859d6f036.d20251110
+  sha256: 406823831a1c9a2a7e9d26a4e1639344e6bea61bfc9c2b9d1226595a2eb82dd1
   requires_python: '>=3.9'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/mmtf-python-1.1.3-pyhd8ed1ab_0.tar.bz2
