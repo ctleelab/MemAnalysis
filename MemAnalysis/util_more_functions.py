@@ -8,44 +8,6 @@ from typing import Tuple, Callable, List
 import warnings
 from scipy import stats
 
-def count_residues(u):
-    count_dict = {}
-    for residue in u.residues:
-        if residue.resname == "ION":
-            name = residue.atoms[0].name
-            if name not in count_dict:
-                count_dict[name] = 1
-            else:
-                count_dict[name] += 1
-        else:
-            if residue.resname not in count_dict:
-                count_dict[residue.resname] = 1
-            else:
-                count_dict[residue.resname] += 1
-    return count_dict
-
-
-def _check_leaflet(u):
-    # ag = u.select_atoms("resname POPC DOPC POPE DOPE")
-    # u.trajectory.add_transformations(center_membrane(ag, shift=5))
-    # print('Centered')
-    rcutoff, n = optimize_cutoff(u, "name PO4")
-    print(rcutoff, n)
-    leafs = LeafletFinder(u, "name PO4", rcutoff, pbc=True)
-    top = leafs.groups(0)
-    bottom = leafs.groups(1)
-    # leafs.write_selection('selection.vmd')
-
-    print(len(top.residues), count_residues(top))
-    print(len(bottom.residues), count_residues(bottom))
-
-    return (set([r.ix for r in top.residues]), set([r.ix for r in bottom.residues]))
-
-
-def check_leaflet(top, gro):
-    u = mda.Universe(top, gro, topology_format="ITP")
-    return _check_leaflet(u)
-
 
 def statistical_inefficiency(
     data,

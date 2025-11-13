@@ -18,17 +18,16 @@ def test_system_report():
     # print(report)
 
 def test_area_per_lipid_per_frame():
-    report = ma.util.area_per_lipid_per_frame(u)
+    report = ma.apl.area_per_lipid_per_frame(u)
     # print(report)
 
 def test_area_per_lipid_stats():
-    mean_area, std_area = ma.util.area_per_lipid_stats(u)
+    mean_area, std_area = ma.apl.area_per_lipid_stats(u)
     # print(f"Mean area per lipid: {mean_area} nm²")
     # print(f"Std area per lipid: {std_area} nm²")
 
 def test_count_residues():
     counts = ma.util.count_residues(u)
-
     # Confirms that the result is a dictionary
     assert isinstance(counts, dict)
 
@@ -36,8 +35,8 @@ def test_count_residues():
     assert all(isinstance(k, str) for k in counts.keys())
     assert all(isinstance(v, int) for v in counts.values())
 
-def test_check_leaflet():
-    top, bottom = ma.util.check_leaflet(u)
+def test_leaflet_residue_counts():
+    top, bottom = ma.la.leaflet_residue_counts(u)
     
     # Verifies that the both leaflets is returned as a set.
     assert isinstance(top, set)
@@ -53,5 +52,5 @@ def test_check_leaflet():
     print(f"Bottom leaflet total residues: {len(bottom)}") 
 
 def test_leaflet_residue_counts_per_frame():
-    report = ma.util.leaflet_residue_counts_per_frame(u)
+    report = ma.la.leaflet_residue_counts_per_frame(u)
     print(report[:2]) 
