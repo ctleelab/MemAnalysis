@@ -20,7 +20,6 @@
 # Parse command-line arguments
 function usage() {
     echo "usage: copyright-precommit-check.sh {FILES}"
-x
 }
 
 srcdir=`git rev-parse --show-toplevel`
@@ -30,7 +29,7 @@ admin_dir=$srcdir/devtools
 FILES=$(echo "$@" | tr " " "\n")
 FILTERED_FILES=$(echo "$FILES" | git check-attr --stdin filter | sed -e 's/.*: filter: //'| paste <(echo "$FILES") - | grep -E 'copyright$' | cut -f1)
 
-if [ -z "$FILTERED_FILES"]
+if [ -z "$FILTERED_FILES" ]
 then
     popd >/dev/null
     exit 0

@@ -1,20 +1,21 @@
-
 #!/usr/bin/env python3
 #
 # MemAnalysis
 #
 # Copyright 2025- The MemAnalysis Authors
 # and the project initiators Carolina Sarto and Christopher T. Lee.
+#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Please help us support MemAnalysis development, by citing the research
-# papers on the package. Check out https://github.com/ctleelab/MemAnalysis/.
+# Please help us support development by citing the research
+# papers on the package. Check out https://github.com/ctleelab/MemAnalysis/
+# for more information.
 
 """Checks and/or updates copyright headers.
 
-This script is shamelessly borrowed from the GROMACS project and adapted for use with automembrane.
+This script is shamelessly borrowed from the GROMACS project and adapted for use with MemAnalysis.
 """
 
 import datetime
@@ -40,25 +41,25 @@ class CopyrightChecker(object):
 
     _header = [
         "",
-        "Automembrane.",
+        "MemAnalysis",
         "",
     ]
-    _copyright = "Copyright {0}- The Automembrane Authors"
+    _copyright = "Copyright {0}- The MemAnalysis Authors"
     _footer = """
-and the project initiators Cuncheng Zhu, Christopher T. Lee, Eleanor Jung, and Honor Akenuwa.
+and the project initiators Carolina Sarto and Christopher T. Lee.
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 Please help us support development by citing the research
-papers on the package. Check out https://github.com/ctleelab/automembrane/
+papers on the package. Check out https://github.com/ctleelab/MemAnalysis/
 for more information.
 """.strip().splitlines()
 
     def check_copyright(self, comment_block):
         """Analyze existing copyright header for correctness and extract information."""
-        copyright_re_new = r"Copyright ([0-9]{4})- The Automembrane Authors"
+        copyright_re_new = r"Copyright ([0-9]{4})- The MemAnalysis Authors"
         copyright_re_old = r"Copyright \(c\) (([0-9]{4})):?.*"
         has_copyright = False
         is_newstyle = True
