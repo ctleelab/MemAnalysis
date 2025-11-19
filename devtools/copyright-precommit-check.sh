@@ -2,7 +2,7 @@
 #
 # MemAnalysis
 #
-# Copyright 2024- The MemAnalysis Authors
+# Copyright 2025- The MemAnalysis Authors
 # and the project initiators Carolina Sarto and Christopher T. Lee.
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
