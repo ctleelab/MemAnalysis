@@ -14,13 +14,13 @@ def area_per_lipid(u: mda.Universe) -> float:
         float: estimated area per lipid in nm²
     """
     # Get box dimensions (x and y) in Å
-    box = u.dimensions[:2]/10  # [lx, ly] nm
+    box = u.dimensions[:2] 
     area = box[0] * box[1]
 
     # Count number of lipids
     lipid_resnames = util.find_lipid_resnames(u)
     lipids = [res for res in u.residues if res.resname in lipid_resnames]
-    n_lipids = len(lipids)
+    n_lipids = len(lipids) // 2  # Divide by 2 for two leaflets
 
     if n_lipids == 0:
         raise ValueError("No lipid residues found in the system.")
@@ -39,15 +39,15 @@ def area_per_lipid_per_frame(u: mda.Universe) -> List[float]:
     """
     lipid_resnames = util.find_lipid_resnames(u)
     lipid_residues = [res for res in u.residues if res.resname in lipid_resnames]
-    n_lipids = len(lipid_residues)
+    n_lipids = len(lipid_residues) // 2  # Divide by 2 for two leaflets
 
     if n_lipids == 0:
         raise ValueError("No lipid residues found in the system.")
 
     area_per_lipid_values = []
     for ts in u.trajectory:
-        box = ts.dimensions[:2] / 10  # Convert from Å to nm
-        area = box[0] * box[1]        # xy-plane area
+        box = ts.dimensions[:2]
+        area = box[0] * box[1]             
         area_per_lipid = area / n_lipids
         area_per_lipid_values.append(area_per_lipid)
     
