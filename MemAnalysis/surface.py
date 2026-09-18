@@ -13,7 +13,7 @@
 # for more information.
 
 """
-Calculation of curvature requires a surface of reference. In MembraneCurvature,
+Calculation of curvature requires a smooth height field as a surface of reference. In MembraneCurvature,
 the surface of reference is defined by the `z` position of the `atoms` in `AtomGroup`.
 """
 
@@ -22,6 +22,7 @@ import warnings
 import MDAnalysis
 import logging
 from scipy.interpolate import griddata
+from scipy.ndimage import gaussian_filter
 
 MDAnalysis.start_logging()
 logger = logging.getLogger("MDAnalysis.MDAKit.membrane_spectral_analysis")
@@ -223,3 +224,16 @@ def get_interpolated_z_surface(coordinates, P, Q, ag=None):
     )
 
     return griddata(xy_wrapped, z_wrapped, (P, Q), method="cubic")
+
+
+def curvature_from_height(matrix_A, edges, nbins, sigma, flip_normal=False):
+    """Periodic Gaussian smoothing, `flip_normal=True` negates the height field first,
+    needed for a leaflet whose own outward normal points -z, so its
+    monolayer mean curvature H comes out complementary (not same-signed)
+    to the other leaflet's for a coherent bilayer undulation."""
+    xmin, xmax, ymin, ymax = edges
+    dx_nm = (xmax - xmin) / nbins / 10.0  # Angstrom -> nm
+    h_nm = gaussian_filter(matrix_A / 10.0, sigma=sigma, mode="wrap")
+    if flip_normal:
+        h_nm = -h_nm
+    return h_nm

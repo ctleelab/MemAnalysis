@@ -1,14 +1,39 @@
-"""Voronoi tessellation: 
-1- True polygon areas.
-1- nearest-generator rasterization.
-3- Cached per (row, system, variant) so multiple scripts reuse the same cKDTree assignment instead of recomputing it each."""
+#
+# MemAnalysis
+#
+# Copyright 2026- The MemAnalysis Authors
+# and the project initiators Carolina Sarto and Christopher T. Lee.
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Please help us support development by citing the research
+# papers on the package. Check out https://github.com/ctleelab/MemAnalysis/
+# for more information.
+
+"""Voronoi tessellation.
+- periodic_voronoi: exact tessellation (scipy.spatial.Voronoi) of a set of generators, periodically tiled so edge cells are correct.
+- voronoi_grid: pixel-center query points for an nbins x nbins raster.
+- nearest_generator_indices: nearest generator (by index) for each query point, periodic under boxsize=[Lx,Ly].
+- voronoi_raster_2d: rasterize per-generator values onto the grid via nearest-generator assignment.
+- compute_tessellation / get_tessellation: per-frame nearest-generator indices for both leaflets, cached so multiple scripts reuse the same cKDTree assignment instead of recomputing it each.
+"""
 
 import pickle
 
 import numpy as np
-from scipy.spatial import cKDTree
+from scipy.spatial import Voronoi, cKDTree
 
-# def voronoi_areas(xy, Lx, Ly):
+
+def periodic_voronoi(gen_xy, Lx, Ly):
+    """Exact Voronoi tessellation (scipy.spatial.Voronoi) of generators `gen_xy`, periodically
+    tiled (3x3 copies) so cells at the box edge are geometrically correct. `gen_xy` should
+    already be wrapped into [0, Lx) x [0, Ly)."""
+    shifts = [(dx * Lx, dy * Ly) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+    tiled_xy = np.vstack([gen_xy + shift for shift in shifts])
+    return Voronoi(tiled_xy)
+
 
 def voronoi_grid(Lx, Ly, nbins):
     """Pixel-center query points for an nbins x nbins raster, row-major [y, x] to match imshow(origin='lower')."""
@@ -28,8 +53,10 @@ def nearest_generator_indices(xy, Lx, Ly, query_points):
     wrapped[:, 0] = np.clip(wrapped[:, 0] % Lx, 0.0, np.nextafter(Lx, 0))
     wrapped[:, 1] = np.clip(wrapped[:, 1] % Ly, 0.0, np.nextafter(Ly, 0))
     tree = cKDTree(wrapped, boxsize=[Lx, Ly])
-    _, idx = tree.query(query_points)       # "_" means that we won't need the distances (first return object)
-    return idx                      # idx[k] is the index of the nearest seed/generator to query_points[k]
+    _, idx = tree.query(
+        query_points
+    )  # "_" means that we won't need the distances (first return object)
+    return idx  # idx[k] is the index of the nearest seed/generator to query_points[k]
 
 
 def voronoi_raster_2d(xy, values, Lx, Ly, query_points, nbins):
@@ -41,7 +68,8 @@ def voronoi_raster_2d(xy, values, Lx, Ly, query_points, nbins):
 def compute_tessellation(u, heads, protein, equil_frames, stride, nbins):
     """Per-frame nearest-generator index for both leaflets -- indices are into `heads` itself (stable
     across frames and across scripts), not into the frame's own top/bot subset, so any script computing
-    its own per-generator values for the same `heads` ordering can rasterize by simple indexing."""
+    its own per-generator values for the same `heads` ordering can rasterize by simple indexing.
+    """
     u.trajectory[equil_frames]
     box0 = u.dimensions[:2]
     Lx, Ly = float(box0[0]), float(box0[1])

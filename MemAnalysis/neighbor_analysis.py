@@ -16,7 +16,7 @@
 This script performs lipid-lipid neighbor analysis in membrane simulations using:
 
 Distance-based method:
-   - Defines neighbors within a specified cutoff (e.g., 15 Å) using MDAnalysis selection language.
+   - Defines neighbors within a specified cutoff (e.g., 15 Å) using MDAnalysis selection.
    - Captures enrichment of lipids in proximity across frames.
 
 This produce the following output structures:
@@ -55,10 +55,15 @@ def run_neighbor_search(u: mda.Universe, cutoff: float = 15.0) -> dict:
     lipid_dict = {name: i for i, name in enumerate(lipid_resnames)}
 
     # Identify leaflets dynamically
-    phosphate_atoms = [f"(resname {resname} and name P*)" for resname in lipid_resnames]
+    phosphate_atoms = [
+        f"(resname {resname} and (name PO4* or name P))" for resname in lipid_resnames
+    ]
     heads = u.select_atoms(" or ".join(phosphate_atoms))
     upper_heads, lower_heads, _ = get_leaflets(heads)
-    leaflets = {"upper": upper_heads.residues.atoms, "lower": lower_heads.residues.atoms}
+    leaflets = {
+        "upper": upper_heads.residues.atoms,
+        "lower": lower_heads.residues.atoms,
+    }
 
     # Initialize count arrays
     count_dict = {
