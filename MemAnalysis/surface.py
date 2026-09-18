@@ -12,21 +12,9 @@
 # papers on the package. Check out https://github.com/ctleelab/MemAnalysis/
 # for more information.
 
-r"""
-.. role:: raw-math(raw) :format: latex html
-
---------------------
-Surface
---------------------
-
+"""
 Calculation of curvature requires a surface of reference. In MembraneCurvature,
 the surface of reference is defined by the `z` position of the `atoms` in `AtomGroup`.
-
-
-Functions
----------
-
-
 """
 
 import numpy as np

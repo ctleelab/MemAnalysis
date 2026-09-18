@@ -28,12 +28,11 @@ This produce the following output structures:
 """
 
 import numpy as np
-from scipy.spatial import Voronoi
 from tqdm.auto import tqdm
 import MDAnalysis as mda
 from pathlib import Path
 from MemAnalysis.util import find_lipid_resnames
-from MemAnalysis.leaflet_analysis import leaflet_residue_counts
+from MemAnalysis.leaflets import get_leaflets
 
 
 def run_neighbor_search(u: mda.Universe, cutoff: float = 15.0) -> dict:
@@ -56,10 +55,10 @@ def run_neighbor_search(u: mda.Universe, cutoff: float = 15.0) -> dict:
     lipid_dict = {name: i for i, name in enumerate(lipid_resnames)}
 
     # Identify leaflets dynamically
-    top_resids, bottom_resids = leaflet_residue_counts(u)
-    upper_atoms = u.residues[list(top_resids)].atoms
-    lower_atoms = u.residues[list(bottom_resids)].atoms
-    leaflets = {"upper": upper_atoms, "lower": lower_atoms}
+    phosphate_atoms = [f"(resname {resname} and name P*)" for resname in lipid_resnames]
+    heads = u.select_atoms(" or ".join(phosphate_atoms))
+    upper_heads, lower_heads, _ = get_leaflets(heads)
+    leaflets = {"upper": upper_heads.residues.atoms, "lower": lower_heads.residues.atoms}
 
     # Initialize count arrays
     count_dict = {

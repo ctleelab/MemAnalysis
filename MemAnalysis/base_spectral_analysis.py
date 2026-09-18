@@ -20,7 +20,7 @@ from .surface import (
     get_z_surface,
     get_interpolated_z_surface,
 )
-from .leaflet_finder import determine_leaflets
+from .leaflets import get_leaflets
 
 import MDAnalysis
 from MDAnalysis.analysis.base import AnalysisBase
@@ -51,7 +51,8 @@ class MembraneSpectralAnalysis(AnalysisBase):
     ):
         super().__init__(universe.universe.trajectory, **kwargs)
 
-        self.ag = determine_leaflets(universe, select)
+        upper, lower, _ = get_leaflets(universe.atoms.select_atoms(select))
+        self.ag = {"upper": upper, "lower": lower}
 
         self.wrap = wrap
         self.interpolate = interpolate

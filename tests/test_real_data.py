@@ -8,10 +8,6 @@ topology_file = "tests/sys.gro"
 trajectory_file = "tests/prod_center_skip1000.xtc"
 u = mda.Universe(topology_file, trajectory_file)
 
-def test_dummy_function():
-    result = ma.dummy.dummy_function(16)
-    assert result == 4.0
-
 def test_system_report():
     report = ma.util.system_report(u)
     # assert report['TOCL'] == 760
@@ -36,21 +32,17 @@ def test_count_residues():
     assert all(isinstance(v, int) for v in counts.values())
 
 def test_leaflet_residue_counts():
-    top, bottom = ma.la.leaflet_residue_counts(u)
-    
+    top, bottom = ma.lf.leaflets_via_anchors(topology_file, trajectory_file, select="name P*")
+
     # Verifies that the both leaflets is returned as a set.
     assert isinstance(top, set)
     assert isinstance(bottom, set)
 
     # Verifies that there is no overlap between the two leaflets
     assert top.isdisjoint(bottom)
-    
+
     # Verifies that both leaflets are not empty
     assert len(top) > 0
     assert len(bottom) > 0
     print(f"Top leaflet total residues: {len(top)}")
-    print(f"Bottom leaflet total residues: {len(bottom)}") 
-
-def test_leaflet_residue_counts_per_frame():
-    report = ma.la.leaflet_residue_counts_per_frame(u)
-    print(report[:2]) 
+    print(f"Bottom leaflet total residues: {len(bottom)}")

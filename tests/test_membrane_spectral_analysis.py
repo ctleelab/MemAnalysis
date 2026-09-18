@@ -18,7 +18,7 @@ import MDAnalysis as mda
 import MemAnalysis
 from MemAnalysis.base_spectral_analysis import MembraneSpectralAnalysis
 from MemAnalysis.surface import get_z_surface, get_interpolated_z_surface
-from MemAnalysis.leaflet_finder import determine_leaflets
+from MemAnalysis.leaflets import get_leaflets
 
 # Load real data
 topology_file = "tests/sys.gro"
@@ -50,11 +50,10 @@ def test_interpolated_surface():
 
 
 # Leaflet Tests
-def test_determine_leaflets():
-    leaflets = determine_leaflets(u, selection="name P*")
-    assert "upper" in leaflets and "lower" in leaflets
+def test_get_leaflets():
     selected_atoms = u.select_atoms("name P*")
-    assert len(leaflets["upper"]) + len(leaflets["lower"]) == len(selected_atoms)
+    upper, lower, cutoff = get_leaflets(selected_atoms)
+    assert len(upper) + len(lower) == len(selected_atoms)
 
 
 # Not the place to do it but create a test for flip detection in leaflet related test

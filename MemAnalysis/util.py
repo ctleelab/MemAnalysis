@@ -50,24 +50,21 @@ def system_report(u: mda.Universe) -> dict:
 def find_lipid_resnames(u: mda.Universe) -> set:
     """
     Identify lipid residue names in the system by looking for residues
-    that contain phosphate atoms (atom name containing "P"). 
-    
+    with a phosphate atom: the Martini "PO4" bead or, in atomistic force
+    fields, an atom simply named "P".
+
     There might be not the best way to do it, but it works for common lipids
     when you don't have other P-containing molecules in the system.
 
     Args:
-        u (MDAnalysis.Universe): MDAnalysis Universe object 
-    
+        u (MDAnalysis.Universe): MDAnalysis Universe object
+
     Returns:
         set: set of lipid residue names
 
     """
-    lipid_resnames = set()
-    for residue in u.residues:
-        for atom in residue.atoms:
-            if "P" in atom.name:
-                lipid_resnames.add(residue.resname)
-                break  # No need to check other atoms in this residue
+    heads = u.select_atoms("name PO4* or name P")
+    lipid_resnames = {res.resname for res in heads.residues}
     print(f"Identified lipid resnames: {lipid_resnames}")
     return lipid_resnames
 
