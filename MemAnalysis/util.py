@@ -9,6 +9,16 @@ import warnings
 from scipy import stats
 
 def count_residues(u):
+    """
+    Count residues in the given Universe, distinguishing ions by atom name.
+
+    Args:
+         u (mda.Universe): MDAnalysis Universe object 
+    
+    Returns:
+        dict: Dictionary with residue names as keys and their counts as values.
+
+    """
     count_dict = {}
     for residue in u.residues:
         if residue.resname == "ION":
@@ -24,238 +34,192 @@ def count_residues(u):
                 count_dict[residue.resname] += 1
     return count_dict
 
-
 def system_report(u: mda.Universe) -> dict:
-    """Generate a report of the system composition.
+    """
+    Print a formatted system report to the console.
+    """
+    composition = count_residues(u.residues)
+    num_atoms = len(u.atoms)
+    num_residues = len(u.residues)
+    box_dimensions_nm = (u.dimensions[0:3] / 10).tolist()  # convert Å to nm
+    n_frames = len(u.trajectory)
+    time_range_ps = (u.trajectory[0].time, u.trajectory[-1].time)
+
+    print("=== SYSTEM REPORT ===")
+    print(f"Composition: {composition}")
+    print(f"Number of atoms: {num_atoms}")
+    print(f"Number of residues: {num_residues}")
+    print(f"Box dimensions: {box_dimensions_nm} nm")
+    print(f"Frames: {n_frames}")
+    print(f"Time range: {time_range_ps[0]} ps to {time_range_ps[1]} ps")
+    print("======================")
+
+
+
+def find_lipid_resnames(u: mda.Universe) -> set:
+    """
+    Identify lipid residue names in the system by looking for residues
+    that contain phosphate atoms (atom name containing "P"). 
+    
+    There might be not the best way to do it, but it works for common lipids
+    when you don't have other P-containing molecules in the system.
 
     Args:
-        u (mda.Universe): MDAnalysis Universe object
+        u (MDAnalysis.Universe): MDAnalysis Universe object 
+    
+    Returns:
+        set: set of lipid residue names
+
+    """
+    lipid_resnames = set()
+    for residue in u.residues:
+        for atom in residue.atoms:
+            if "P" in atom.name:
+                lipid_resnames.add(residue.resname)
+                break  # No need to check other atoms in this residue
+    print(f"Identified lipid resnames: {lipid_resnames}")
+    return lipid_resnames
+
+
+def area_per_lipid(u: mda.Universe) -> float:
+    """
+    Estimate area per lipid from the simulation box dimensions.
+
+    Args:
+        u (MDAnalysis.Universe): MDAnalysis Universe object
 
     Returns:
-        dict: count per resname
+        float: estimated area per lipid in nm²
     """
-    count_dict = {}
-    for residue in u.residues:
-        if residue.resname not in count_dict:
-            count_dict[residue.resname] = 1
-        else:
-            count_dict[residue.resname] += 1
-    print(f"\tComposition: {count_dict}")
-    # assert u.atoms.total_charge() == 0
-    print(f"\t     charge: {u.atoms.total_charge()}")
-    print(f"\t  num atoms: {len(u.atoms)}")
-    # print(f"\t dimensions: {u.dimensions[0:3]/10} nm")
-    print()
-    return count_dict
+    # Get box dimensions (x and y) in Å
+    box = u.dimensions[:2]/10  # [lx, ly] nm
+    area = box[0] * box[1]
+
+    # Count number of lipids
+    lipid_resnames = find_lipid_resnames(u)
+    lipids = [res for res in u.residues if res.resname in lipid_resnames]
+    n_lipids = len(lipids)
+
+    if n_lipids == 0:
+        raise ValueError("No lipid residues found in the system.")
+
+    return area / n_lipids
+
+def area_per_lipid_per_frame(u: mda.Universe) -> List[float]:
+    """
+    Calculate area per lipid for each frame in the trajectory.
+
+    Args:
+        u (MDAnalysis.Universe): Universe object containing topology and trajectory.
+
+    Returns:
+        List[float]: Area per lipid for each frame in nm²
+    """
+    lipid_resnames = find_lipid_resnames(u)
+    lipid_residues = [res for res in u.residues if res.resname in lipid_resnames]
+    n_lipids = len(lipid_residues)
+
+    if n_lipids == 0:
+        raise ValueError("No lipid residues found in the system.")
+
+    area_per_lipid_values = []
+    for ts in u.trajectory:
+        box = ts.dimensions[:2] / 10  # Convert from Å to nm
+        area = box[0] * box[1]        # xy-plane area
+        area_per_lipid = area / n_lipids
+        area_per_lipid_values.append(area_per_lipid)
+    
+    return area_per_lipid_values
+
+def area_per_lipid_stats(u: mda.Universe) -> Tuple[float, float]:
+    """
+    Calculate mean and standard deviation of area per lipid over the trajectory.
+
+    Args:
+        u (MDAnalysis.Universe): Universe object containing topology and trajectory.
+
+    Returns:
+        Tuple[float, float]: Mean and standard deviation of area per lipid in nm²
+    """
+    apl_values = area_per_lipid_per_frame(u)
+    mean_apl = np.mean(apl_values)
+    std_apl = np.std(apl_values)
+    return mean_apl, std_apl    
 
 
-def _check_leaflet(u):
-    # ag = u.select_atoms("resname POPC DOPC POPE DOPE")
-    # u.trajectory.add_transformations(center_membrane(ag, shift=5))
-    # print('Centered')
-    rcutoff, n = optimize_cutoff(u, "name PO4")
-    print(rcutoff, n)
-    leafs = LeafletFinder(u, "name PO4", rcutoff, pbc=True)
+def check_leaflet(u: mda.Universe) -> Tuple[Set[int], Set[int]]:
+    """
+    Identify top and bottom leaflets in a bilayer system using phosphate-containing lipid residues.
+
+    Args:
+        u (MDAnalysis.Universe): MDAnalysis Universe object
+
+    Returns:
+        Tuple[Set[int], Set[int]]: Sets of residue indices (r.ix) for top and bottom leaflets.
+    """
+    # Find lipid residue names
+    lipid_resnames = find_lipid_resnames(u)
+
+    # Build a selection string for phosphate atoms in those residues
+    phosphate_atoms = []
+    for resname in lipid_resnames:
+        phosphate_atoms.append(f"(resname {resname} and name P*)")  # selects atoms with 'P' in name
+    selection_string = " or ".join(phosphate_atoms)
+
+    # Use optimized cutoff for leaflet separation
+    rcutoff, n_groups = optimize_cutoff(u, selection_string)
+    if n_groups < 2:
+        raise ValueError(f"LeafletFinder found fewer than two groups (n={n_groups}).")
+
+    leafs = LeafletFinder(u, selection_string, rcutoff, pbc=True)
     top = leafs.groups(0)
     bottom = leafs.groups(1)
-    # leafs.write_selection('selection.vmd')
 
-    print(len(top.residues), count_residues(top))
-    print(len(bottom.residues), count_residues(bottom))
+    top_resids = {res.ix for res in top.residues}
+    bottom_resids = {res.ix for res in bottom.residues}
 
-    return (set([r.ix for r in top.residues]), set([r.ix for r in bottom.residues]))
-
-
-def check_leaflet(top, gro):
-    u = mda.Universe(top, gro, topology_format="ITP")
-    return _check_leaflet(u)
+    return top_resids, bottom_resids
 
 
-def statistical_inefficiency(
-    data,
-    blocks: npt.NDArray[np.int32] = np.arange(1, 257, 1),
-    discards: npt.NDArray[np.int32] = np.arange(0, 100, 10),
-):
-    SI = np.zeros((len(discards), len(blocks)))
-
-    for i, discard in enumerate(discards):
-        # Discard front bit of data
-        _, remainder = np.split(data, [int(discard / 100 * len(data))])
-        _, block_var, _ = _block_average(remainder, blocks)
-
-        SI[i] = blocks * (block_var / block_var[0])
-    return discards, blocks, SI
-
-
-def _block_average(
-    data: npt.ArrayLike, blocks: npt.NDArray[np.int32] = np.arange(1, 100, 1)
-) -> Tuple[npt.NDArray[np.double], npt.NDArray[np.double], npt.NDArray[np.double]]:
-    block_mean = np.zeros((len(blocks)))
-    block_var = np.zeros((len(blocks)))
-    block_sem = np.zeros((len(blocks)))
-    for i, block in enumerate(blocks):
-        split_indices = np.arange(block, len(data), block, dtype=int)
-        if block > len(data):
-            block_mean[i] = np.nan
-            block_var[i] = np.nan
-            block_sem[i] = np.nan
-            continue
-        blocked_data = np.fromiter(
-            map(
-                partial(np.mean, axis=0),
-                np.split(data, split_indices),
-            ),
-            dtype=np.double,
-        )
-
-        # Truncate number of blocks if not evenly divisible
-        if len(data) % block:
-            blocked_data = blocked_data[:-1]
-        block_mean[i] = np.mean(blocked_data)
-        block_var[i] = np.var(blocked_data, ddof=1)
-        block_sem[i] = stats.sem(blocked_data, ddof=1)
-    return block_mean, block_var, block_sem
-
-
-def block_average(
-    data,
-    discard=20,
-    blocks: npt.NDArray[np.int32] = np.arange(1, 257, 1),
-) -> Tuple[npt.NDArray[np.double], npt.NDArray[np.double], npt.NDArray[np.double]]:
-    _, remainder = np.split(data, [int(discard / 100 * len(data))])
-    return _block_average(remainder, blocks)
-
-
-def nd_block_average(
-    data: npt.ArrayLike,
-    axis: int = 0,
-    func: Callable[[npt.ArrayLike], float] = np.mean,
-    blocks: npt.NDArray[np.int32] = np.arange(1, 100, 1),
-) -> npt.ArrayLike:
-    """Perform block analysis on n-dimensional data
+def leaflet_residue_counts_per_frame(u: mda.Universe) -> List[Tuple[float, int, int, dict, dict]]:
+    """
+    Perform leaflet analysis per frame and return the number of residues
+    in top and bottom leaflets for each frame. Recomputes leaflets every frame
+    to detect lipid flipping.
 
     Args:
-        data (npt.ArrayLike): _description_
-        axis (int, optional): _description_. Defaults to 0.
-        func (Callable[[npt.ArrayLike], float], optional): _description_. Defaults to np.mean.
-        blocks (npt.NDArray[np.int32], optional): _description_. Defaults to np.arange(1, 100, 1).
-
-    Raises:
-        np.AxisError: _description_
+        u (MDAnalysis.Universe): Universe object containing topology and trajectory.
 
     Returns:
-        Tuple[npt.NDArray[np.double], npt.NDArray[np.double], npt.NDArray[np.double]]: _description_
+        List[Tuple]: Each tuple contains (time, top_count, bottom_count, top_residue_counts, bottom_residue_counts)
     """
+    # Dynamically find lipid residue names
+    lipid_resnames = find_lipid_resnames(u)
 
-    # Guard against bad axis
-    if axis >= len(data.shape):
-        raise np.AxisError(axis, len(data.shape))
+    # Build selection string for phosphate atoms
+    phosphate_atoms = [f"(resname {resname} and name P*)" for resname in lipid_resnames]
+    selection_string = " or ".join(phosphate_atoms)
 
-    result_shape = tuple([v for i, v in enumerate(data.shape) if i != axis])
+    results = []
 
-    result = np.empty((len(blocks), *result_shape))
-    # print("results_shape", result.shape, result_shape)
+    for ts in u.trajectory:
+        # Optimize cutoff for this frame (or reuse a fixed cutoff for speed)
+        rcutoff, n_groups = optimize_cutoff(u, selection_string)
+        if n_groups < 2:
+            raise ValueError(f"LeafletFinder found fewer than two groups (n={n_groups}).")
 
-    for i, block in enumerate(blocks):
-        Nb, r = divmod(data.shape[axis], block)
-        split_indices = np.arange(r, data.shape[axis], block, dtype=int)
+        # Compute leaflets for this frame
+        leaflets = LeafletFinder(u, selection_string, rcutoff, pbc=True)
+        top = leaflets.groups(0)
+        bottom = leaflets.groups(1)
 
-        if block > data.shape[axis]:
-            result[i] = np.nan
-            continue
+        # Count residues
+        top_count = len(top.residues)
+        bottom_count = len(bottom.residues)
+        top_residue_counts = count_residues(top.residues)
+        bottom_residue_counts = count_residues(bottom.residues)
 
-        # Compute block average
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            blocked_data = np.fromiter(
-                map(
-                    partial(np.mean, axis=axis),
-                    np.split(data, split_indices, axis=axis),  # List of blocks
-                ),
-                dtype=np.dtype((np.double, (*result_shape,))),
-            )
+        results.append((ts.time, top_count, bottom_count, top_residue_counts, bottom_residue_counts))
 
-        # Truncate first block which is either empty or has less than block elements
-        result[i] = func(blocked_data[1:], axis=0)
-    return result.T
+    return results
 
-
-def parametric_bootstrap(
-    rvs: List[Callable],
-    n_samples: int = 9999,
-) -> npt.ArrayLike:
-    """Resample data given a set of distributions
-
-    Args:
-        rvs (List[Callable]): list of random valuable generators
-        n_samples (int, optional): Number of samples to generate of the set. Defaults to 9999.
-
-    Returns:
-        npt.ArrayLike: Array of results
-    """
-    res = np.empty((len(rvs), n_samples))
-
-    for i, rv in enumerate(rvs):
-        res[i] = rv(size=n_samples)
-
-    return res
-
-
-def mean_curvature(Z, h):
-    """
-    Calculates mean curvature from Z cloud points.
-
-
-    Parameters
-    ----------
-    Z: np.ndarray.
-        Multidimensional array of shape (n,n).
-    h: float.
-        Regular grid separation
-
-    Returns
-    -------
-    H : np.ndarray.
-        The result of mean curvature of Z. Returns multidimensional
-        array object with values of mean curvature of shape `(n, n)`.
-
-    """
-
-    Zx, Zy = np.gradient(Z, h)
-    Zxx, Zxy = np.gradient(Zx, h)
-    _, Zyy = np.gradient(Zy, h)
-
-    H = (1 + Zx**2) * Zyy + (1 + Zy**2) * Zxx - 2 * Zx * Zy * Zxy
-    H = -H / (2 * (1 + Zx**2 + Zy**2) ** (1.5))
-
-    return H
-
-
-def gaussian_curvature(Z, h):
-    """
-    Calculate Gaussian curvature from Z cloud points.
-
-
-    Parameters
-    ----------
-    Z: np.ndarray.
-        Multidimensional array of shape (n,n).
-    varargs : list of scalar or array, optional
-        Spacing between f values. Default unitary spacing for all dimensions.
-        See np.gradient docs for more information.
-
-    Returns
-    -------
-    K : np.ndarray.
-        The result of Gaussian curvature of Z. Returns multidimensional
-        array object with values of Gaussian curvature of shape `(n, n)`.
-
-    """
-
-    Zx, Zy = np.gradient(Z, h)
-    Zxx, Zxy = np.gradient(Zx, h)
-    _, Zyy = np.gradient(Zy, h)
-
-    K = (Zxx * Zyy - (Zxy**2)) / (1 + (Zx**2) + (Zy**2)) ** 2
-
-    return K
