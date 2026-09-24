@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -171,5 +172,4 @@ MemAnalysis/_version.py
 # Auto-generated files of trajectory .xtc files
 *.xtc_offsets.lock
 *.xtc_offsets.npz
-tests/.prod_center_skip1000.xtc_offsets.lock
-tests/.prod_center_skip1000.xtc_offsets.npz
+*profraw

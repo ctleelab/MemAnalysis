@@ -1,14 +1,8 @@
 ### If the function stats with test_ it will be automatically run by pytest
-
 import pytest
 import MemAnalysis as ma
 import MDAnalysis as mda
 from MDAnalysisData import datasets   
-
-def test_dummy_function():
-    result = ma.dummy.dummy_function(16)
-    assert result == 4.0
-
 
 def test_system_report():
     data = datasets.fetch_membrane_peptide()
@@ -19,7 +13,7 @@ def test_system_report():
 def test_area_per_lipid():
     data = datasets.fetch_membrane_peptide()
     u = mda.Universe(data.topology, data.trajectory)
-    report = ma.util.area_per_lipid(u)
+    report = ma.apl.area_per_lipid(u)
     print(report)
  
 

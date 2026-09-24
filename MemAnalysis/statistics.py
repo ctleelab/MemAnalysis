@@ -1,51 +1,10 @@
-import MDAnalysis as mda
-from MDAnalysis.analysis.leaflet import LeafletFinder, optimize_cutoff
-
 import numpy as np
 import numpy.typing as npt
 
 from typing import Tuple, Callable, List
 import warnings
 from scipy import stats
-
-def count_residues(u):
-    count_dict = {}
-    for residue in u.residues:
-        if residue.resname == "ION":
-            name = residue.atoms[0].name
-            if name not in count_dict:
-                count_dict[name] = 1
-            else:
-                count_dict[name] += 1
-        else:
-            if residue.resname not in count_dict:
-                count_dict[residue.resname] = 1
-            else:
-                count_dict[residue.resname] += 1
-    return count_dict
-
-
-def _check_leaflet(u):
-    # ag = u.select_atoms("resname POPC DOPC POPE DOPE")
-    # u.trajectory.add_transformations(center_membrane(ag, shift=5))
-    # print('Centered')
-    rcutoff, n = optimize_cutoff(u, "name PO4")
-    print(rcutoff, n)
-    leafs = LeafletFinder(u, "name PO4", rcutoff, pbc=True)
-    top = leafs.groups(0)
-    bottom = leafs.groups(1)
-    # leafs.write_selection('selection.vmd')
-
-    print(len(top.residues), count_residues(top))
-    print(len(bottom.residues), count_residues(bottom))
-
-    return (set([r.ix for r in top.residues]), set([r.ix for r in bottom.residues]))
-
-
-def check_leaflet(top, gro):
-    u = mda.Universe(top, gro, topology_format="ITP")
-    return _check_leaflet(u)
-
+from functools import partial
 
 def statistical_inefficiency(
     data,
@@ -176,62 +135,3 @@ def parametric_bootstrap(
 
     return res
 
-
-def mean_curvature(Z, h):
-    """
-    Calculates mean curvature from Z cloud points.
-
-
-    Parameters
-    ----------
-    Z: np.ndarray.
-        Multidimensional array of shape (n,n).
-    h: float.
-        Regular grid separation
-
-    Returns
-    -------
-    H : np.ndarray.
-        The result of mean curvature of Z. Returns multidimensional
-        array object with values of mean curvature of shape `(n, n)`.
-
-    """
-
-    Zx, Zy = np.gradient(Z, h)
-    Zxx, Zxy = np.gradient(Zx, h)
-    _, Zyy = np.gradient(Zy, h)
-
-    H = (1 + Zx**2) * Zyy + (1 + Zy**2) * Zxx - 2 * Zx * Zy * Zxy
-    H = -H / (2 * (1 + Zx**2 + Zy**2) ** (1.5))
-
-    return H
-
-
-def gaussian_curvature(Z, h):
-    """
-    Calculate Gaussian curvature from Z cloud points.
-
-
-    Parameters
-    ----------
-    Z: np.ndarray.
-        Multidimensional array of shape (n,n).
-    varargs : list of scalar or array, optional
-        Spacing between f values. Default unitary spacing for all dimensions.
-        See np.gradient docs for more information.
-
-    Returns
-    -------
-    K : np.ndarray.
-        The result of Gaussian curvature of Z. Returns multidimensional
-        array object with values of Gaussian curvature of shape `(n, n)`.
-
-    """
-
-    Zx, Zy = np.gradient(Z, h)
-    Zxx, Zxy = np.gradient(Zx, h)
-    _, Zyy = np.gradient(Zy, h)
-
-    K = (Zxx * Zyy - (Zxy**2)) / (1 + (Zx**2) + (Zy**2)) ** 2
-
-    return K

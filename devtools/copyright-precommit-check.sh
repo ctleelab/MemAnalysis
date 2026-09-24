@@ -2,7 +2,7 @@
 #
 # MemAnalysis
 #
-# Copyright 2024- The MemAnalysis Authors
+# Copyright 2025- The MemAnalysis Authors
 # and the project initiators Carolina Sarto and Christopher T. Lee.
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,6 @@
 # Parse command-line arguments
 function usage() {
     echo "usage: copyright-precommit-check.sh {FILES}"
-x
 }
 
 srcdir=`git rev-parse --show-toplevel`
@@ -30,7 +29,7 @@ admin_dir=$srcdir/devtools
 FILES=$(echo "$@" | tr " " "\n")
 FILTERED_FILES=$(echo "$FILES" | git check-attr --stdin filter | sed -e 's/.*: filter: //'| paste <(echo "$FILES") - | grep -E 'copyright$' | cut -f1)
 
-if [ -z "$FILTERED_FILES"]
+if [ -z "$FILTERED_FILES" ]
 then
     popd >/dev/null
     exit 0

@@ -30,11 +30,13 @@ classifiers = [
 dependencies = []
 dynamic = ["version"]
 
+
 [tool.hatch]
 version.source = "vcs"
 version.raw_options.version_scheme = "guess-next-dev"
 version.raw_options.local_scheme = "node-and-date"
 build.hooks.vcs.version-file = "MemAnalysis/_version.py"
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
@@ -49,6 +51,8 @@ python = ">=3.14.0,<3.15"
 mdanalysis = ">=2.10.0,<3"
 numpy = ">=2.3.3,<3"
 scipy = ">=1.16.2,<2"
+hatch = ">=1.14.1,<2"
+pre-commit = ">=4.4.0,<5"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
@@ -58,7 +62,8 @@ mdanalysisdata = "*"
 [tool.pixi.feature.test.tasks]
 tests = "pytest"
 tests-print = "pytest -s"
-tests-verbose = "pytest -v"
+test_neighbor = "pytest tests/test_neighbor.py -v"
+test-spectral = "pytest tests/test_membrane_spectral_analysis.py"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
